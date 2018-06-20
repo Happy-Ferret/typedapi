@@ -1,14 +1,11 @@
 package typedapi.server.http4s
 
+import typedapi.internal.test.util.{UserCoding, User}
 import typedapi.server._
 import org.http4s.server.Server
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.dsl.io._
-import org.http4s.circe._
-import io.circe.generic.JsonCodec
 import cats.effect.IO
-
-@JsonCodec final case class User(name: String, age: Int)
 
 object TestServer {
 
@@ -59,8 +56,7 @@ object TestServer {
     IO.pure(User("joe", 27))
   }
 
-  implicit val decoder = jsonOf[IO, User]
-  implicit val encoder = jsonEncoderOf[IO, User]
+  import UserCoding._
 
   val endpointsDsl = deriveAll[IO](ApiDsl).from(path, segment, query, header, raw, get, put, putB, post, postB, delete)
   val endpointsDef = deriveAll[IO](ApiDef).from(path, segment, query, header, raw, get, put, putB, post, postB, delete)

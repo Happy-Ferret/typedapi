@@ -1,9 +1,7 @@
 package typedapi.server.http4s
 
-import org.http4s.{Headers, Header, Request, Uri}
-import org.http4s.dsl.io._
+import typedapi.internal.test.util.{TestClient, TestResult, User}
 import org.http4s.client.blaze._
-import org.http4s.client.dsl.io._
 import org.http4s.server.blaze.BlazeBuilder
 import cats.effect.IO
 import org.specs2.mutable.Specification
@@ -13,32 +11,30 @@ final class ServerApiSpec extends Specification {
   sequential
 
   import TestServer._
+  import TestClient._
 
   val client = Http1Client[IO]().unsafeRunSync
 
   def tests(port: Int) = {
-    "paths and segments" >> {
-        client.expect[User](s"http://localhost:$port/path").unsafeRunSync() === User("joe", 27)
-        client.expect[User](s"http://localhost:$port/segment/jim").unsafeRunSync() === User("jim", 27)
-      }
-  
-      "queries" >> {
-        client.expect[User](s"http://localhost:$port/query?age=42").unsafeRunSync() === User("joe", 42)
-      }
- 
-      "headers" >> {
-        client.expect[User](Request[IO](method = GET, uri = Uri.fromString(s"http://localhost:$port/header").right.get, headers = Headers(Header("age", "42")))).unsafeRunSync() === User("joe", 42)
-        client.expect[User](Request[IO](method = GET, uri =Uri.fromString(s"http://localhost:$port/header/raw").right.get, headers = Headers(Header("age", "42"), Header("name", "jim")))).unsafeRunSync() === User("jim", 42)
-      }
+    def executeTest(result: TestResult[User]) = result.expected === result.actual
+    def executeTests(results: List[TestResult[User]]) = results.map(executeTest)
 
-      "methods" >> {
-        client.expect[User](s"http://localhost:$port/").unsafeRunSync() === User("joe", 27)
-        client.expect[User](PUT(Uri.fromString(s"http://localhost:$port/").right.get)).unsafeRunSync() === User("joe", 27)
-        client.expect[User](PUT(Uri.fromString(s"http://localhost:$port/body").right.get, User("joe", 27))).unsafeRunSync() === User("joe", 27)
-        client.expect[User](POST(Uri.fromString(s"http://localhost:$port/").right.get)).unsafeRunSync() === User("joe", 27)
-        client.expect[User](POST(Uri.fromString(s"http://localhost:$port/body").right.get, User("joe", 27))).unsafeRunSync() === User("joe", 27)
-        client.expect[User](DELETE(Uri.fromString(s"http://localhost:$port/?reasons=because").right.get)).unsafeRunSync() === User("joe", 27)
-      }
+    "paths and segments" >> {
+      executeTest(testPath(client, port))
+      executeTest(testSegment(client, port))
+    }
+  
+    "queries" >> {
+      executeTest(testQueries(client, port))
+    }
+ 
+    "headers" >> {
+      executeTests(testHeaders(client, port))
+    }
+
+    "methods" >> {
+      executeTests(testMethods(client, port))
+    }
   }
 
   val serverDsl = startDsl(BlazeBuilder[IO]).unsafeRunSync()

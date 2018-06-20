@@ -1,7 +1,7 @@
 package typedapi.client.http4s
 
+import typedapi.internal.test.util.{TestServer, User, UserCoding}
 import typedapi.client._
-
 import cats.effect.IO
 import org.http4s.client.blaze.Http1Client
 import org.specs2.mutable.Specification
@@ -14,7 +14,7 @@ final class ApiRequestSpec extends Specification {
 
   val cm = ClientManager(Http1Client[IO]().unsafeRunSync, "http://localhost", 9001)
 
-  import TestServer.{decoder, encoder}
+  import UserCoding._
 
   "http4s client" >> {
     "api dsl" >> {

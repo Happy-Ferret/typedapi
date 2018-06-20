@@ -118,6 +118,15 @@ lazy val server = project
   )
   .dependsOn(shared)
 
+lazy val `internal-test-util` = project
+  .in(file("internal-test-util"))
+  .settings(
+    commonSettings,
+    libraryDependencies ++= Dependencies.internalTestUtil,
+
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+  )
+
 lazy val `http4s-client` = project
   .in(file("http4s-client"))
   .configs(IntegrationTest)
@@ -130,7 +139,7 @@ lazy val `http4s-client` = project
 
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
-  .dependsOn(client)
+  .dependsOn(`internal-test-util` % "test -> test", client)
 
 lazy val `http4s-server` = project
   .in(file("http4s-server"))
@@ -144,4 +153,16 @@ lazy val `http4s-server` = project
 
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
-  .dependsOn(server)
+  .dependsOn(`internal-test-util` % "test -> test", server)
+
+lazy val `akka-http-client` = project
+  .in(file("akka-http-client"))
+  .settings(
+    commonSettings,
+    mavenSettings,
+    name := "typedapi-akka-http-client",
+    libraryDependencies ++= Dependencies.akkaHttpClient,
+
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+  )
+  .dependsOn(`internal-test-util`, client)
